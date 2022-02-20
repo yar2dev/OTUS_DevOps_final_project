@@ -1,6 +1,6 @@
 # Changelog
 
-## (22-02-20)
+## (2022-02-20)
 
 ### Added
 
@@ -11,7 +11,7 @@
 * В конфиг Logstash добавлена обработка поля message => удаление двойных кавычек, перименование созданного поля в filebeat json.service в servicename
 * По полю servicename в Kibana можно искать события относящиеся к приложению search engine (например servicename:crawler)
 
-## (22-02-18)
+## (2022-02-18)
 
 ### Changed
 
