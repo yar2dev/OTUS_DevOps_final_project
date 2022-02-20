@@ -9,11 +9,14 @@
 ### Инфраструктура ###
 
 Создание инфраструктыры выполняется при помощи Packer/Terraform/Ansible
+
 При помощи Packer создается образ для развертывания сервера MongoDB
+> cd infra
+> packer build --var-file packer/variables.json packer/mongodb.json 
 
 Terraform создает: 
 - внутреннюю сеть
-- внешний IP
+- резервирует внешний IP
 - DNS запись для существующего домена (для gitlab)
 - Виртуальную машину с MongoDB из образа подготовленного Packer
 - Виртуальную машину для Gitlab
@@ -24,7 +27,7 @@ Ansible из плейбука разворачивает Gitlab на подго�
 
 Для запуска:
 > cd infra/terraform 
-terraform apply
+> terraform apply
 
 ### Микросервисы ###
 Для сборки приложений созданы Dockerfile
@@ -37,16 +40,16 @@ Rabbitmq и gitlab-runner деплоится при помощи Helm
 
 Установка crawler, prometheus, grafana:
 > cd microservices
-kubectl apply -f k8s/
-kubectl apply -f app/
-kubectl apply -f monitoring/
+> kubectl apply -f k8s/
+> kubectl apply -f app/
+> kubectl apply -f monitoring/
 
 RabbitMQ:
 >export RABBITMQ_PASSWORD="P@ssword"
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install rabbitmq \
-  --set auth.password=$RABBITMQ_PASSWORD \
-    bitnami/rabbitmq
+> helm repo add bitnami https://charts.bitnami.com/bitnami
+> helm install rabbitmq \
+>  --set auth.password=$RABBITMQ_PASSWORD \
+>     bitnami/rabbitmq
 
 gitlab-runner:
 После создания проектов в Gitlab (https://gitlab.yar2.space), получить токены раннеров и 
@@ -54,7 +57,7 @@ gitlab-runner:
 в параметр runnerRegistrationToken.
 Выполнить:
 > helm install --namespace gitlab gitlab-runner-ui -f values-ui.yaml gitlab/gitlab-runner
-helm install --namespace gitlab gitlab-runner-crawler -f values-crawler.yaml gitlab/gitlab-runner
+> helm install --namespace gitlab gitlab-runner-crawler -f values-crawler.yaml gitlab/gitlab-runner
 
 
 ### CI/CD ###

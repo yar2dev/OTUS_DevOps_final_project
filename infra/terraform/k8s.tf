@@ -55,7 +55,7 @@ resource "yandex_kubernetes_node_group" "k8s_node_group" {
     }
 
     resources {
-      memory = 12
+      memory = 8
       cores  = 4
     }
 
@@ -77,7 +77,7 @@ resource "yandex_kubernetes_node_group" "k8s_node_group" {
 
   scale_policy {
     fixed_scale {
-      size = 2
+      size = 3
     }
   }
 
