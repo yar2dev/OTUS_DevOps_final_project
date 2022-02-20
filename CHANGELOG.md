@@ -2,6 +2,10 @@
 
 ## (2022-02-20)
 
+### Changed
+
+* В модуль приложения UI добавлено расширение flask-zipkin https://github.com/qiajigou/flask-zipkin
+
 ### Added
 
 * Добавлен сборщик логов Filebeat
@@ -10,6 +14,7 @@
 * В конфиг Filebeat добавлено раскрытие json поля message 
 * В конфиг Logstash добавлена обработка поля message => удаление двойных кавычек, перименование созданного поля в filebeat json.service в servicename
 * По полю servicename в Kibana можно искать события относящиеся к приложению search engine (например servicename:crawler)
+* Добавлен трейсинг Zipkin
 
 ## (2022-02-18)
 

@@ -1,4 +1,4 @@
-from flask import Flask, request, g, render_template, logging, Response
+from flask import Flask, request, g, render_template, logging, Response, Blueprint
 from functools import reduce
 from os import getenv
 import uuid
@@ -7,6 +7,9 @@ import structlog
 from pymongo import MongoClient
 import traceback
 import prometheus_client
+from flask_zipkin import Zipkin
+
+ZIPKIN_DISABLE = False
 
 CONTENT_TYPE_LATEST = str('text/plain; version=0.0.4; charset=utf-8')
 COUNTER_PAGES_SERVED = prometheus_client.Counter('web_pages_served', 'Number of pages served by frontend')
@@ -148,3 +151,14 @@ def exceptions(e):
               method=request.method,
               traceback=tb)
     return 'Internal Server Error', 500
+
+zipkin = Zipkin(app, sample_rate=10)
+app.config['ZIPKIN_DSN'] = "http://zipkin:9411/api/v1/spans"
+
+
+@app.route('/')
+def hello():
+    headers = {}
+    headers.update(zipkin.create_http_headers_for_new_span())
+    r = requests.get('http://localhost:5001', headers=headers)
+    return r.text
