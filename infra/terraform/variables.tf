@@ -53,3 +53,9 @@ variable "mongodb_image_id" {
   description = "mongodb image id"
 
 }
+variable "gitlab_domain" {
+  description = "gitlab.yar2.space."
+
+}
+
+

@@ -22,7 +22,7 @@ resource "yandex_dns_zone" "zone1" {
 
 resource "yandex_dns_recordset" "gitlab" {
   zone_id = yandex_dns_zone.zone1.id
-  name    = "gitlab.yar2.space."
+  name    = var.gitlab_domain
   type    = "A"
   ttl     = 60
   data    = [yandex_vpc_address.gitlabIP.external_ipv4_address.0.address]
@@ -52,7 +52,7 @@ resource "yandex_compute_instance" "srv-gitlab" {
   boot_disk {
     initialize_params {
       size     = 30
-      type     = "network-ssd"
+      type     = "network-hdd"
       image_id = data.yandex_compute_image.image.id
     }
   }
