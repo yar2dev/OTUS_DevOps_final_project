@@ -29,4 +29,4 @@ spec:
         name: ui
         env:
           - name: MONGO
-            value:  {{ .Values.databaseHost | default (printf "%s-mongodb" .Release.Name) }}
+            value:  '{{ .Values.databaseHost | default (printf "%s-mongodb" .Release.Name) }}'

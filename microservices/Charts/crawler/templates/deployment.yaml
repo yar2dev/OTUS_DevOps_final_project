@@ -29,19 +29,19 @@ spec:
         name: crawler
         env:
           - name: MONGO
-            value:  {{ .Values.MONGO | default (printf "%s-mongodb" .Release.Name) }}
+            value:  '{{ .Values.MONGO | default (printf "mongodb") }}'
           - name: MONGO_PORT
-            value: {{ .Values.MONGO_PORT | quote "27017" }}
+            value: '{{ .Values.MONGO_PORT | default (printf "27017") }}'
           - name: RMQ_HOST
-            value: {{ .Values.RMQ_HOST | quote "rabbitmq-headless" }}
+            value: '{{ .Values.RMQ_HOST | default (printf  "rabbitmq-headless" )}}'
           - name: RMQ_QUEUE
-            value: {{ .Values.RMQ_QUEUE | default (printf "%s-crawler" .Release.Name) }}
+            value: '{{ .Values.RMQ_QUEUE | default (printf "%s-crawler" .Release.Name) }}'
           - name: RMQ_USERNAME
-            value: {{ .Values.RMQ_USERNAME | quote "user" }}
+            value: '{{ .Values.RMQ_USERNAME | default (printf "user") }}'
           - name: RMQ_PASSWORD
-            value: {{ .Values.RMQ_PASSWORD | quote "crawler_pass" }}
+            value: '{{ .Values.RMQ_PASSWORD | default (printf "crawler_pass") }}'
           - name: CHECK_INTERVAL
-            value: {{ .Values.CHECK_INTERVAL | quote "10" }}
+            value: '{{ .Values.CHECK_INTERVAL | default (printf "10" )}}'
           - name: EXCLUDE_URLS
-            value: {{ .Values.EXCLUDE_URLS | quote ".*github.com" }}
+            value: '{{ .Values.EXCLUDE_URLS | default (printf ".*github.com") }}'
 
