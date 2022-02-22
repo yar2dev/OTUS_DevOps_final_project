@@ -29,4 +29,6 @@ spec:
         name: ui
         env:
           - name: MONGO
-            value:  '{{ .Values.databaseHost | default (printf "%s-mongodb" .Release.Name) }}'
+            value:  '{{ .Values.MONGO | default (printf "%s-mongodb" .Release.Name) }}'
+          - name: MONGO_PORT
+            value:  '{{ .Values.MONGO_PORT | default (printf "27017" ) }}'

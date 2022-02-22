@@ -4,12 +4,14 @@ helm install --namespace gitlab gitlab-runner-crawler -f values-crawler.yaml git
 
 helm install --namespace gitlab gitlab-runner-ui \
   --set gitlabUrl=https://gitlab2.yar2.space/ \
-  runnerRegistrationToken="" \
+  --set runnerRegistrationToken="..." \
+  --set runners.privileged=true \
    gitlab/gitlab-runner
 
 helm install --namespace gitlab gitlab-runner-crawler \
   --set gitlabUrl=https://gitlab2.yar2.space/ \
-  runnerRegistrationToken="79_pbbzmg2o7-1xho17X" \
+  --set runnerRegistrationToken="..." \
+  --set runners.privileged=true \
    gitlab/gitlab-runner
 
 
