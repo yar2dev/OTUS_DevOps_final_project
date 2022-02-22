@@ -30,6 +30,7 @@ resource "yandex_dns_recordset" "gitlab" {
 
 output "Ext_IP_address_gitlab_yar2_space" {
   value = yandex_vpc_address.gitlabIP.external_ipv4_address.0.address
+  
 }
 
 
