@@ -34,7 +34,7 @@ spec:
           - name: RMQ_USERNAME
             value: "user"
           - name: RMQ_PASSWORD
-            value: 'crawler_pass_'
+            value: 'crawler_pass'
           - name: CHECK_INTERVAL
             value: "10"
           - name: EXCLUDE_URLS

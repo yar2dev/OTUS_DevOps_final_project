@@ -51,7 +51,7 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: prometheus-server-lb
+  name: prometheus-server
   namespace: monitoring
 spec:
   selector:

@@ -43,4 +43,4 @@ spec:
     targetPort: ui
   selector:
     k8s-app: kibana
-  type: LoadBalancer
+  type: ClusterIP

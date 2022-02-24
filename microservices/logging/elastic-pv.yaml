@@ -10,11 +10,11 @@ spec:
   storageClassName: default
   claimRef:
     name: data-es-cluster-0
-    namespace: default
+    namespace: logging
   csi:
     driver: disk-csi-driver.mks.ycloud.io
     fsType: ext4
-    volumeHandle: ef3750jq8le499sre8qu
+    volumeHandle: ef322eku7vbe4bh06rkc
 
 ---
 apiVersion: v1
@@ -28,11 +28,11 @@ spec:
   storageClassName: default
   claimRef:
     name: data-es-cluster-1
-    namespace: default
+    namespace: logging
   csi:
     driver: disk-csi-driver.mks.ycloud.io
     fsType: ext4
-    volumeHandle: ef3lbgmuk6aau1s36fsl
+    volumeHandle: ef3tm3iphkst98mt3op6
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -45,8 +45,8 @@ spec:
   storageClassName: default
   claimRef:
     name: data-es-cluster-2
-    namespace: default
+    namespace: logging
   csi:
     driver: disk-csi-driver.mks.ycloud.io
     fsType: ext4
-    volumeHandle: ef30s2dfhitm8ic8lu5b
+    volumeHandle: ef34k9ris9his8grfv5j

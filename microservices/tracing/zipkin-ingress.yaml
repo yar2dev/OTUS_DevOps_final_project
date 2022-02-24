@@ -1,0 +1,14 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: zipkin-ingress
+spec:
+  rules:
+  - host: zipkin.yar2.space
+    http:
+      paths:
+      - path: "/"
+        backend:
+          serviceName: zipkin
+          servicePort: 9411

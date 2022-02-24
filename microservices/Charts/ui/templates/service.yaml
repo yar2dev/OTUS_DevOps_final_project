@@ -13,7 +13,7 @@ spec:
    - name: http
      protocol: TCP
      port: {{ .Values.service.externalPort }}
-     targetPort: 8000
+     targetPort: {{ .Values.service.internalPort }}
   selector:
     app: search_engine
     component: ui
