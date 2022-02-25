@@ -65,7 +65,7 @@ resource "yandex_kubernetes_node_group" "k8s_node_group" {
     }
     metadata = {
       ssh-keys = "${var.ssh_username}:${data.local_file.ssh_key.content}"
-      }
+    }
 
 
     scheduling_policy {
@@ -115,14 +115,12 @@ data "local_file" "ssh_key" {
 
 resource "null_resource" "kube-context" {
   provisioner "local-exec" {
-    command     = "yc managed-kubernetes cluster get-credentials k8s-cluster --external --force"
-     
-     }
+    command = "yc managed-kubernetes cluster get-credentials k8s-cluster --external --force"
+
+  }
   depends_on = [yandex_kubernetes_node_group.k8s_node_group]
 }
 
 
 
-output "cluster_external_v4_endpoint" {
-  value = yandex_kubernetes_cluster.k8s-cluster.master.0.external_v4_endpoint
-}
+

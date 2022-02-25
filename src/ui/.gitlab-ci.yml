@@ -5,11 +5,9 @@ image: alpine:latest
 stages:
   - build
   - test
-  - review
   - release
-  - cleanup
   - staging
-  - deploy_trigger
+  - production
   
 
 build:
@@ -25,12 +23,27 @@ build:
   only:
     - branches
 
-test:
+unit_test:
   stage: test
+  image: docker
+  services:
+    - docker:18.09.7-dind
   script:
-    - exit 0
-  only:
-    - branches
+    - setup_docker
+    - unit_test
+  variables:
+    KUBE_NAMESPACE: test
+
+coverage_test:
+  stage: test
+  image: docker
+  services:
+    - docker:18.09.7-dind
+  script:
+    - setup_docker
+    - coverage_test
+  variables:
+    KUBE_NAMESPACE: test
 
 release:
   stage: release
@@ -44,55 +57,6 @@ release:
     - master
 
 
-review:
-  stage: review
-  script:
-    - install_dependencies
-    - ensure_namespace
-    - deploy
-  variables:
-    KUBE_NAMESPACE: review
-    host: $CI_PROJECT_PATH_SLUG-$CI_COMMIT_REF_SLUG
-  environment:
-    name: review/$CI_PROJECT_PATH/$CI_COMMIT_REF_NAME
-    url: http://$CI_PROJECT_PATH_SLUG-$CI_COMMIT_REF_SLUG
-    on_stop: stop_review
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
-    - master
-
-stop_review:
-  stage: cleanup
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - install_dependencies
-    - delete
-  environment:
-    name: review/$CI_PROJECT_PATH/$CI_COMMIT_REF_NAME
-    action: stop
-  when: manual
-  allow_failure: true
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
-    - master
-
-deploy_trigger:
-  stage: deploy_trigger
-  script:
-    - apk add curl
-    - "curl -X POST -F token=$CI_DEPLOY_TOKEN -F ref=master http://gitlab.yar2.space/api/v4/projects/1/trigger/pipeline"
-  only:
-    refs:
-      - master
-   
-
 
 
 staging:
@@ -100,64 +64,46 @@ staging:
   image: alpine:latest
   variables:
     KUBE_NAMESPACE: staging
-    MONGO_PORT: "20217"
+    MONGO_PORT: "27017"
+    host: $CI_PROJECT_PATH_SLUG-$CI_COMMIT_REF_SLUG
+    CI_APPLICATION_TAG: $CI_COMMIT_REF_SLUG
+    name: $CI_ENVIRONMENT_SLUG
+    domain: http://staging.yar2.space
+  environment:
+    name: staging
+  script:
+    - setup_docker
+    - deploy
+  only:
+    refs:
+      - master
+
+
+
+production:
+  stage: production
+  image: alpine:latest
+  variables:
+    KUBE_NAMESPACE: production
+    RMQ_PASSWORD: crawler_pass
+    MONGO: srv-mongodb
+    MONGO_PORT: "27017"
+    domain: http://app.yar2.space
     host: $CI_PROJECT_PATH_SLUG-$CI_COMMIT_REF_SLUG
     CI_APPLICATION_TAG: $CI_COMMIT_REF_SLUG
     name: $CI_ENVIRONMENT_SLUG
   environment:
-    name: staging
-    url: http://staging
-
-  before_script:
-    # installing dependencies
-    - apk add -U openssl curl tar gzip bash ca-certificates git
-    - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-    - chmod 700 get_helm.sh
-    - ./get_helm.sh
-    - helm version --client
-    - curl  -o /usr/bin/sync-repo.sh https://raw.githubusercontent.com/kubernetes/helm/master/scripts/sync-repo.sh
-    - chmod a+x /usr/bin/sync-repo.sh
-    - curl -L -o /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
-    - chmod +x /usr/bin/kubectl
-    - kubectl version --client
-    - kubectl describe namespace "$KUBE_NAMESPACE" || kubectl create namespace "$KUBE_NAMESPACE"
-      
+    name: production
   script:
-    - export track="${1-stable}"
-    - >
-      if [[ "$track" != "stable" ]]; then
-        name="$name-$track"
-      fi
-
-    - echo "Clone deploy repository..."
-    - git clone https://github.com/yar2dev/OTUS_DevOps_final_project.git
-    - cd OTUS_DevOps_final_project/microservices/Charts
-    - echo "Deploy helm release $name to $KUBE_NAMESPACE"
-    #- helm repo add bitnami https://charts.bitnami.com/bitnami
-    
-    #- echo "helm upgrade --install --wait --set ui.ingress.host="$host" --set $CI_PROJECT_NAME.image.tag="$CI_APPLICATION_TAG" --namespace="$KUBE_NAMESPACE" --version="$CI_PIPELINE_ID-$CI_JOB_ID" "$name" reddit-deploy/reddit/"
-
-    - helm uninstall --wait $CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME --namespace="$KUBE_NAMESPACE" || echo "crawler is not installed"
-
-
-
-    - >
-      helm install \
-        --wait \
-        --set MONGO="$CI_COMMIT_REF_SLUG-mongodb" \
-        --set MONGO_PORT="$MONGO_PORT" \
-        --set $CI_PROJECT_NAME.image.tag="$CI_APPLICATION_TAG" \
-        --namespace="$KUBE_NAMESPACE" \
-        --version="$CI_PIPELINE_ID-$CI_JOB_ID" \
-        "$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME" \
-        ./$CI_PROJECT_NAME
-
+    - install_dependencies
+    - deploy_production
   only:
     refs:
-      - master
-    
-  except: 
-    - triggers
+      - master    
+  when: manual
+
+
+
 
 .auto_devops: &auto_devops |
   [[ "$TRACE" ]] && set -x
@@ -167,31 +113,98 @@ staging:
   export CI_CONTAINER_NAME=ci_job_build_${CI_JOB_ID}
 
 
-  function deploy() {
-    track="${1-stable}"
-    name="$CI_ENVIRONMENT_SLUG"
-
-    if [[ "$track" != "stable" ]]; then
-      name="$name-$track"
-    fi
-
-    echo "Clone deploy repository..."
-    git clone http://gitlab.yar2.space/$CI_PROJECT_NAMESPACE/reddit-deploy.git
-
-    echo "Download helm dependencies......."
-    helm dep update reddit-deploy/reddit
-
-    echo "Deploy helm release $name to $KUBE_NAMESPACE"
-    helm upgrade --install \
-      --wait \
-      --set ui.ingress.host="$host" \
-      --set $CI_PROJECT_NAME.image.tag=$CI_APPLICATION_TAG \
-      --namespace="$KUBE_NAMESPACE" \
-      --version="$CI_PIPELINE_ID-$CI_JOB_ID" \
-      "$name" \
-      reddit-deploy/reddit/
+  function unit_test() {
+  
+  echo `docker run $DOCKER_REGISTRY_USER/crawler:latest python -m unittest discover -s tests/ `
 
   }
+
+
+  function coverage_test() {
+  
+  echo `docker run $CI_APPLICATION_REPOSITORY:$(cat VERSION) coverage run -m unittest discover -s tests/ `
+  
+  echo `docker run $CI_APPLICATION_REPOSITORY:$(cat VERSION) coverage report --include ui/ui.py`
+  }
+
+
+
+  function deploy() {
+    
+    apk add -U openssl curl tar gzip bash ca-certificates git
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh
+    helm version --client
+    curl  -o /usr/bin/sync-repo.sh https://raw.githubusercontent.com/kubernetes/helm/master/scripts/sync-repo.sh
+    chmod a+x /usr/bin/sync-repo.sh
+    curl -L -o /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    chmod +x /usr/bin/kubectl
+    kubectl version --client
+    kubectl describe namespace "$KUBE_NAMESPACE" || kubectl create namespace "$KUBE_NAMESPACE"
+
+
+    export track="${1-stable}"
+    
+      if [[ "$track" != "stable" ]]; then
+        name="$name-$track"
+      fi
+
+    echo "Clone deploy repository..."
+    git clone https://github.com/yar2dev/OTUS_DevOps_final_project.git
+    cd OTUS_DevOps_final_project/microservices/Charts
+    echo "Deploy helm release $name to $KUBE_NAMESPACE"
+  
+    helm uninstall --wait $CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME --namespace="$KUBE_NAMESPACE" || echo "crawler is not installed"
+
+
+
+  
+    helm install \
+      --wait \
+      --set MONGO="$CI_COMMIT_REF_SLUG-mongodb" \
+      --set MONGO_PORT="$MONGO_PORT" \
+      --set image_tag="$tag" \
+      --set URL=$domain \
+      --namespace="$KUBE_NAMESPACE" \
+      --version="$CI_PIPELINE_ID-$CI_JOB_ID" \
+      "$CI_COMMIT_REF_SLUG-$CI_PROJECT_NAME" \
+      ./$CI_PROJECT_NAME
+
+  }
+
+
+  function deploy_production() {
+    
+    apk add -U openssl curl tar gzip bash ca-certificates git
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh
+    helm version --client
+    curl  -o /usr/bin/sync-repo.sh https://raw.githubusercontent.com/kubernetes/helm/master/scripts/sync-repo.sh
+    chmod a+x /usr/bin/sync-repo.sh
+    curl -L -o /usr/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+    chmod +x /usr/bin/kubectl
+    kubectl version --client
+    kubectl describe namespace "$KUBE_NAMESPACE" || kubectl create namespace "$KUBE_NAMESPACE"
+
+
+    export track="${1-stable}"
+    
+      if [[ "$track" != "stable" ]]; then
+        name="$name-$track"
+      fi
+
+    echo "Clone deploy repository..."
+    git clone https://github.com/yar2dev/OTUS_DevOps_final_project.git
+    cd OTUS_DevOps_final_project/microservices/app
+ 
+    kubectl rollout restart -f ui-deploy.yaml --namespace "$KUBE_NAMESPACE" || kubectl apply -f ui-deploy.yaml --namespace "$KUBE_NAMESPACE"
+
+  }
+
+
+
 
   function install_dependencies() {
 
@@ -233,8 +246,8 @@ staging:
       echo ""
     fi
 
-    docker pull "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG"
-    docker tag "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG" "$CI_APPLICATION_REPOSITORY:$(cat VERSION)"
+    docker pull "$CI_APPLICATION_REPOSITORY:latest"
+    docker tag "$CI_APPLICATION_REPOSITORY:latest" "$CI_APPLICATION_REPOSITORY:$(cat VERSION)"
     docker push "$CI_APPLICATION_REPOSITORY:$(cat VERSION)"
     echo ""
   }
@@ -246,7 +259,7 @@ staging:
     echo `git rev-parse --abbrev-ref HEAD` >> build_info.txt
     echo $CI_APPLICATION_REPOSITORY
     echo $CI_APPLICATION_TAG
-    docker build -t "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG" .
+    docker build -t "$CI_APPLICATION_REPOSITORY:latest" .
 
     if [[ -n "$CI_REGISTRY_USER" ]]; then
       echo "Logging to GitLab Container Registry with CI credentials..."
@@ -255,7 +268,7 @@ staging:
     fi
 
     echo "Pushing to GitLab Container Registry..."
-    docker push "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG"
+    docker push "$CI_APPLICATION_REPOSITORY:latest"
     echo ""
   }
 

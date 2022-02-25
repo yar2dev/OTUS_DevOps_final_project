@@ -5,7 +5,7 @@ metadata:
   name: {{ .Release.Name }}-{{ .Chart.Name }}
 spec:
   rules:
-  - host: '{{ .Values.Domain_Name | default (printf "stage.yar2.space" ) }}'
+  - host: '{{ .Values.URL | default (printf "staging.yar2.space" ) }}'
     http:
       paths:
       - path: "/"

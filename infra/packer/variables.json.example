@@ -1,6 +1,6 @@
 {
     "disk_size": "5",
-    "source_image_id": "00000000001111111111",
-    "key_file":"packer/files/key.json",
-    "folder_id":"1111111122222222"
+    "source_image_id": "...",
+    "key_file":"../key.json",
+    "folder_id":"..."
 }

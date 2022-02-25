@@ -1,9 +1,9 @@
 
 
 resource "yandex_compute_instance" "srv-mongodb" {
-  name = "srv-mongodb"
+  name     = "srv-mongodb"
   hostname = "srv-mongodb"
-  zone = var.zone_app
+  zone     = var.zone_app
   metadata = {
     ssh-keys = "ubuntu:${file(var.public_key_path)}"
   }

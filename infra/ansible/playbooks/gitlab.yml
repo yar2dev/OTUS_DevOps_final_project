@@ -1,7 +1,7 @@
 ---
 - name: Gitlab
   become: true
-  hosts: all
+  hosts: gitlab
   tasks:
 
     - name: Wait for APT Lock
@@ -39,7 +39,7 @@
       apt:
         name: gitlab-ce
       environment: 
-        EXTERNAL_URL: "https://gitlab2.yar2.space" 
+        EXTERNAL_URL: "https://gitlab.yar2.space" 
       when: not gitlab_file.stat.exists
 
     - name: Extract init root password

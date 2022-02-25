@@ -15,9 +15,9 @@ resource "yandex_vpc_address" "gitlabIP" {
 resource "yandex_dns_zone" "zone1" {
   name        = "yar2-zone"
   description = "desc"
-  zone             = "yar2.space."
-  public           = true
-  
+  zone        = "yar2.space."
+  public      = true
+
 }
 
 resource "yandex_dns_recordset" "gitlab" {
@@ -28,17 +28,12 @@ resource "yandex_dns_recordset" "gitlab" {
   data    = [yandex_vpc_address.gitlabIP.external_ipv4_address.0.address]
 }
 
-output "Ext_IP_address_gitlab_yar2_space" {
-  value = yandex_vpc_address.gitlabIP.external_ipv4_address.0.address
-  
-}
-
 
 
 resource "yandex_compute_instance" "srv-gitlab" {
-  name = "srv-gitlab"
+  name     = "srv-gitlab"
   hostname = "srv-gitlab"
-  zone = var.zone_app
+  zone     = var.zone_app
   metadata = {
     ssh-keys = "ubuntu:${file(var.public_key_path)}"
   }
@@ -61,29 +56,29 @@ resource "yandex_compute_instance" "srv-gitlab" {
 
   network_interface {
 
-    subnet_id = yandex_vpc_subnet.subnet_yc_kuber.id
-    nat       = true
+    subnet_id      = yandex_vpc_subnet.subnet_yc_kuber.id
+    nat            = true
     nat_ip_address = yandex_vpc_address.gitlabIP.external_ipv4_address.0.address
-    
+
   }
 
-#waiting for machine start
+  #waiting for machine start
   provisioner "remote-exec" {
     inline = [
     "echo"]
   }
 
   connection {
-    type  = "ssh"
-    host  = self.network_interface[0].nat_ip_address
-    user  = "ubuntu"
-    agent = false
+    type        = "ssh"
+    host        = self.network_interface[0].nat_ip_address
+    user        = "ubuntu"
+    agent       = false
     private_key = file(var.private_key_path)
   }
 
 
-   provisioner "local-exec" {
-   command     = "ansible-playbook playbooks/gitlab.yml"
-   working_dir = "../ansible"
+  provisioner "local-exec" {
+    command     = "ansible-playbook playbooks/site.yml"
+    working_dir = "../ansible"
   }
 }
