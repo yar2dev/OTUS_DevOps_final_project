@@ -12,15 +12,19 @@
 
 
 ### Используемые локальные инструменты
+
 Рабочая станция с OS – Ubuntu 18.04
 С установленными:
+
 •	Yandex CLI
 •	Packer
 •	Terraform
 •	Ansible
 •	Kubectl
 •	Helm3
-Используемые внешние ресурсы
+
+### Используемые внешние ресурсы
+
 •	Yandex Cloud
 •	Домен yar2.space с прописанными серверами имен ns1.yandexcloud.net. и ns2.yandexcloud.net.
 
