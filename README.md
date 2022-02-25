@@ -38,7 +38,7 @@ $ yc config list - Получить Folder-id
 $ SVC_ACCT="прописать свое имя"
 $ FOLDER_ID="вписать полученный Folder-id" 
  
-Создаем аккаунт и назначаем права:
+Создать аккаунт и назначить права:
 
 $ yc iam service-account create --name $SVC_ACCT --folder-id $FOLDER_ID
 $ ACCT_ID=$(yc iam service-account get $SVC_ACCT | \
